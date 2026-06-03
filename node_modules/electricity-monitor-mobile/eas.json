@@ -2,11 +2,13 @@
   "build": {
     "preview": {
       "distribution": "internal",
+      "workflow": "managed",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "workflow": "managed",
       "android": {
         "buildType": "apk"
       }

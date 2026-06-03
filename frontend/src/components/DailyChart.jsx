@@ -29,9 +29,7 @@ export default function DailyChart({ readings }) {
         };
       }
 
-      if (dailyMap[dayKey].readings > 0) {
-        dailyMap[dayKey].consumption += reading.reading - reading.previousReading;
-      }
+      dailyMap[dayKey].consumption += reading.reading - reading.previousReading;
       dailyMap[dayKey].readings += 1;
     });
 

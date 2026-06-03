@@ -4,12 +4,25 @@
     "slug": "electricity-monitor-mobile",
     "version": "1.0.0",
     "sdkVersion": "49.0.0",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"]
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "07f821d0-c600-4555-a7b3-95efa5197789"
+      }
+    },
+    "android": {
+      "package": "com.josephccadag.electricitymonitormobile"
+    }
   }
 }

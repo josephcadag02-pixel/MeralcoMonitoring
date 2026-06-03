@@ -29,9 +29,7 @@ export default function MonthlyChart({ readings }) {
         };
       }
 
-      if (monthlyMap[monthKey].readings > 0) {
-        monthlyMap[monthKey].consumption += reading.reading - reading.previousReading;
-      }
+      monthlyMap[monthKey].consumption += reading.reading - reading.previousReading;
       monthlyMap[monthKey].readings += 1;
     });
 

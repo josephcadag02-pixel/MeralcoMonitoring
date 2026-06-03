@@ -194,10 +194,31 @@ eas build -p android --profile preview
 ```
 4. Download the generated APK from the EAS build page or CLI output.
 
+> If this project has a local `android/` folder from a previous `expo run:android` or `expo prebuild`, EAS managed builds can still succeed when the profile is forced to `managed` in `mobile/eas.json`.
+
 If you prefer a local emulator/build flow, use:
 ```bash
 cd mobile
 npx expo run:android
+```
+
+#### Local Android build requirements
+For local Android builds, your machine needs a compatible JDK version. Expo / Gradle for this project works best with Java 17:
+- Install JDK 17 (Temurin 17, Amazon Corretto 17, or similar)
+- Set `JAVA_HOME` to that JDK 17 installation
+- Ensure `java -version` reports `17.x`
+
+If you see an error like `Unsupported class file major version 68`, it means your JDK is too new. Install JDK 17 and point `JAVA_HOME` to it before running:
+```bash
+cd mobile
+npx expo run:android
+```
+
+#### Run the APK build script
+Once JDK 17 is configured, you can also run the wrapper script we added:
+```bash
+cd mobile
+npm run build-apk
 ```
 
 ## Responsive Design
