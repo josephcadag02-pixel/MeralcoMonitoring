@@ -154,7 +154,8 @@ Get consumption statistics.
 ### Web Deployment
 - Build frontend: `npm run build` in the frontend directory
 - Deploy the `dist` folder to any static hosting (Netlify, Vercel, GitHub Pages)
-- Configure API endpoint in the frontend environment
+- Set `VITE_API_URL` to your deployed backend URL, for example `https://meralcomonitoring.onrender.com`
+- Make sure the frontend is built after setting the Netlify environment variable, because Vite embeds the value at build time.
 
 ### Desktop Application (Electron)
 You can wrap this as an Electron app for Windows/Mac/Linux. The responsive design already works on all screen sizes.

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../api';
 import './ReadingForm.css';
 
 export default function ReadingForm({ onReadingAdded }) {
@@ -18,7 +18,7 @@ export default function ReadingForm({ onReadingAdded }) {
     // fetch last reading to populate previousReading
     const loadLast = async () => {
       try {
-        const res = await axios.get('/api/stats');
+        const res = await api.get('/api/stats');
         const last = res && res.data && res.data.lastReading;
         if (last && last.reading !== undefined && last.reading !== null) {
           setPreviousReading(last.reading.toString());
@@ -44,7 +44,7 @@ export default function ReadingForm({ onReadingAdded }) {
       // Convert datetime-local (local) to ISO string
       const isoTimestamp = timestamp ? new Date(timestamp).toISOString() : undefined;
 
-      await axios.post('/api/readings', {
+      await api.post('/api/readings', {
         reading: parseFloat(reading),
         previousReading: previousReading ? parseFloat(previousReading) : undefined,
         timestamp: isoTimestamp
@@ -58,7 +58,7 @@ export default function ReadingForm({ onReadingAdded }) {
       onReadingAdded();
       // refresh previous reading locally
       try {
-        const res2 = await axios.get('/api/stats');
+        const res2 = await api.get('/api/stats');
         const last2 = res2 && res2.data && res2.data.lastReading;
         if (last2 && last2.reading !== undefined && last2.reading !== null) {
           setPreviousReading(last2.reading.toString());

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from './api';
 import ReadingForm from './components/ReadingForm';
 import StatisticsCard from './components/StatisticsCard';
 import DailyChart from './components/DailyChart';
@@ -44,8 +44,8 @@ export default function App() {
     try {
       setLoading(true);
       const [readingsRes, statsRes] = await Promise.all([
-        axios.get('/api/readings'),
-        axios.get('/api/stats')
+        api.get('/api/readings'),
+        api.get('/api/stats')
       ]);
       const fetchedReadings = readingsRes.data;
       setReadings(fetchedReadings);
