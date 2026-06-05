@@ -86,6 +86,16 @@ export default function App() {
     setMonthlyCycleKwh(calculateMonthlyCycleUsage(readings, monthCutoffDay));
   }, [readings, monthCutoffDay]);
 
+  useEffect(() => {
+    const now = new Date();
+    const days30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const last30Consumption = readings.reduce((acc, r) => {
+      const d = new Date(r.timestamp);
+      return d >= days30 ? acc + ((r.reading - r.previousReading) || 0) : acc;
+    }, 0);
+    setLast30DaysCost(last30Consumption * ratePerKwh);
+  }, [readings, ratePerKwh]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -110,14 +120,6 @@ export default function App() {
       setMonthlySummaries(summaries.slice(-24));
 
       // compute last 30 days consumption and cost
-      const now = new Date();
-      const days30 = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
-      const last30Consumption = fetchedReadings.reduce((acc, r) => {
-        const d = new Date(r.timestamp);
-        if (d >= days30) return acc + ((r.reading - r.previousReading) || 0);
-        return acc;
-      }, 0);
-      setLast30DaysCost(last30Consumption * ratePerKwh);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -165,10 +167,15 @@ export default function App() {
     window.setTimeout(() => setSettingsMessage(''), 2500);
   };
 
+  const averageMonthlyKwh = monthlySummaries.length > 0
+    ? monthlySummaries.reduce((sum, month) => sum + month.total, 0) / monthlySummaries.length
+    : 0;
+  const estimatedYearlyCost = averageMonthlyKwh * 12 * ratePerKwh;
+
   return (
     <div className="app">
       <header className="header">
-        <div className="header-content" style={{ textAlign: 'center', marginLeft: '200px' }}>
+        <div className="header-content">
           <h1>⚡ Electricity Consumption Monitor</h1>
           <p>Track your daily, monthly, and yearly consumption</p>
         </div>
@@ -276,6 +283,12 @@ export default function App() {
                   value={stats.yearly}
                   unit="kWh"
                   color="#45B7D1"
+                />
+                <StatisticsCard
+                  label={`Estimated Annual Cost (${currency})`}
+                  value={estimatedYearlyCost}
+                  unit={` ${currency}`}
+                  color="#2D9CDB"
                 />
                 {stats.lastReading && (
                   <StatisticsCard

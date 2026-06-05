@@ -13,6 +13,12 @@
   justify-content: space-between;
   gap: 20px;
   text-align: left;
+  flex-wrap: wrap;
+}
+
+.header-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .header-content h1 {
@@ -277,6 +283,30 @@
 
   .readings-table {
     overflow-x: auto;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 30px 20px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: center;
+    margin-top: 18px;
+  }
+
+  .header-content h1 {
+    font-size: 2rem;
+  }
+
+  .settings-panel,
+  .charts-section,
+  .readings-table,
+  .form-container {
+    padding: 20px;
   }
 
   .readings-table th,
