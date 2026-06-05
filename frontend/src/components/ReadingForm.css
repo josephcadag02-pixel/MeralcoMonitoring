@@ -39,6 +39,22 @@
   transition: border-color 0.3s ease;
 }
 
+/* Ensure inputs and buttons never cause horizontal overflow on small screens */
+.form-container,
+.reading-form,
+.form-group {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.form-group input,
+.submit-btn,
+.consumption-preview {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .form-group input:focus {
   outline: none;
   border-color: #667eea;
