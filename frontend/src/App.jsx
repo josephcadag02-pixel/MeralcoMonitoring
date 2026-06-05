@@ -18,11 +18,47 @@ export default function App() {
   const [settingsMessage, setSettingsMessage] = useState('');
   const [monthlySummaries, setMonthlySummaries] = useState([]);
   const [last30DaysCost, setLast30DaysCost] = useState(0);
+  const [monthCutoffDay, setMonthCutoffDay] = useState(28);
+  const [monthlyCycleKwh, setMonthlyCycleKwh] = useState(0);
+
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+
+  const getBillingCycleStart = (cutoffDay) => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysThisMonth = getDaysInMonth(year, month);
+    const effectiveCutoff = Math.min(cutoffDay, daysThisMonth);
+
+    if (now.getDate() >= effectiveCutoff) {
+      return new Date(year, month, effectiveCutoff, 0, 0, 0, 0);
+    }
+
+    const prev = new Date(year, month, 0);
+    const prevYear = prev.getFullYear();
+    const prevMonth = prev.getMonth();
+    const prevDays = getDaysInMonth(prevYear, prevMonth);
+    const prevCutoff = Math.min(cutoffDay, prevDays);
+    return new Date(prevYear, prevMonth, prevCutoff, 0, 0, 0, 0);
+  };
+
+  const calculateMonthlyCycleUsage = (readingsList, cutoffDay) => {
+    if (!readingsList?.length) return 0;
+    const cycleStart = getBillingCycleStart(cutoffDay);
+    return readingsList.reduce((acc, r) => {
+      const timestamp = new Date(r.timestamp);
+      if (timestamp >= cycleStart) {
+        return acc + ((r.reading - r.previousReading) || 0);
+      }
+      return acc;
+    }, 0);
+  };
 
   useEffect(() => {
     const storedRateValue = localStorage.getItem('meralcoRate');
     const storedCurrency = localStorage.getItem('currency');
     const storedTimezone = localStorage.getItem('timezone');
+    const storedCutoff = localStorage.getItem('monthCutoffDay');
 
     if (storedRateValue !== null) {
       const storedRate = parseFloat(storedRateValue);
@@ -36,9 +72,19 @@ export default function App() {
     if (storedTimezone) {
       setTimezone(storedTimezone);
     }
+    if (storedCutoff) {
+      const cutoffValue = parseInt(storedCutoff, 10);
+      if (!Number.isNaN(cutoffValue) && cutoffValue >= 1 && cutoffValue <= 31) {
+        setMonthCutoffDay(cutoffValue);
+      }
+    }
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    setMonthlyCycleKwh(calculateMonthlyCycleUsage(readings, monthCutoffDay));
+  }, [readings, monthCutoffDay]);
 
   const fetchData = async () => {
     try {
@@ -114,6 +160,7 @@ export default function App() {
     localStorage.setItem('meralcoRate', ratePerKwh.toString());
     localStorage.setItem('currency', currency);
     localStorage.setItem('timezone', timezone);
+    localStorage.setItem('monthCutoffDay', monthCutoffDay.toString());
     setSettingsMessage('Settings saved');
     window.setTimeout(() => setSettingsMessage(''), 2500);
   };
@@ -179,6 +226,21 @@ export default function App() {
                     <option value="Asia/Tokyo">Asia/Tokyo</option>
                   </select>
                 </label>
+                <label className="settings-field">
+                  Billing cycle reset day
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={monthCutoffDay}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(value) && value >= 1 && value <= 31) {
+                        setMonthCutoffDay(value);
+                      }
+                    }}
+                  />
+                </label>
               </div>
               <div className="settings-actions">
                 <button className="settings-save-button" onClick={saveSettings}>Save Settings</button>
@@ -192,8 +254,8 @@ export default function App() {
             <>
               <div className="stats-grid">
                 <StatisticsCard
-                  label={`Monthly Cost (${currency})`}
-                  value={stats.monthly * ratePerKwh}
+                  label={`Billing Cycle Cost (${currency})`}
+                  value={monthlyCycleKwh * ratePerKwh}
                   unit={` ${currency}`}
                   color="#FF6B6B"
                 />
@@ -204,8 +266,8 @@ export default function App() {
                   color="#FF884D"
                 />
                 <StatisticsCard
-                  label="This Month"
-                  value={stats.monthly}
+                  label="Current Billing Cycle"
+                  value={monthlyCycleKwh}
                   unit="kWh"
                   color="#4ECDC4"
                 />

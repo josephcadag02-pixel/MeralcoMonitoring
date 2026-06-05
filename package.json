@@ -3,14 +3,12 @@
   "private": true,
   "workspaces": [
     "backend",
-    "frontend",
-    "mobile"
+    "frontend"
   ],
   "scripts": {
     "install-all": "npm install",
     "start": "npm --workspace backend start",
     "dev": "npm --workspace frontend run dev",
-    "start-mobile": "npm --workspace mobile start",
     "dev-all": "concurrently \"npm --workspace backend start\" \"npm --workspace frontend run dev\"",
     "start-all": "npm run dev-all",
     "start-backend": "npm --workspace backend start",

@@ -53,7 +53,6 @@ npm start
 - `npm start` - Start backend server
 - `npm run dev` - Start frontend dev server
 - `npm run dev-all` - Start backend and frontend together
-- `npm run start-mobile` - Start the mobile wrapper app
 
 ### Frontend Setup
 
@@ -159,68 +158,6 @@ Get consumption statistics.
 
 ### Desktop Application (Electron)
 You can wrap this as an Electron app for Windows/Mac/Linux. The responsive design already works on all screen sizes.
-
-### Mobile App (React Native)
-The backend API can also be used with a React Native mobile app using the same API endpoints.
-
-### Mobile Wrapper Setup
-1. Navigate to the mobile folder:
-```bash
-cd mobile
-npm install
-npm start
-```
-2. Use the Expo app, Android emulator, or iOS simulator.
-3. Set the backend base URL in the mobile app to your host:
-   - Android emulator: `http://10.0.2.2:5000`
-   - iOS simulator / macOS: `http://localhost:5000`
-   - Real device: `http://<your-pc-ip>:5000`
-
-### Generate an APK
-Yes — you can generate an APK from the mobile wrapper using Expo Application Services (EAS).
-
-1. Install EAS CLI:
-```bash
-cd mobile
-npm install -g eas-cli
-```
-2. Login or register:
-```bash
-eas login
-```
-3. Build an Android APK:
-```bash
-cd mobile
-eas build -p android --profile preview
-```
-4. Download the generated APK from the EAS build page or CLI output.
-
-> If this project has a local `android/` folder from a previous `expo run:android` or `expo prebuild`, EAS managed builds can still succeed when the profile is forced to `managed` in `mobile/eas.json`.
-
-If you prefer a local emulator/build flow, use:
-```bash
-cd mobile
-npx expo run:android
-```
-
-#### Local Android build requirements
-For local Android builds, your machine needs a compatible JDK version. Expo / Gradle for this project works best with Java 17:
-- Install JDK 17 (Temurin 17, Amazon Corretto 17, or similar)
-- Set `JAVA_HOME` to that JDK 17 installation
-- Ensure `java -version` reports `17.x`
-
-If you see an error like `Unsupported class file major version 68`, it means your JDK is too new. Install JDK 17 and point `JAVA_HOME` to it before running:
-```bash
-cd mobile
-npx expo run:android
-```
-
-#### Run the APK build script
-Once JDK 17 is configured, you can also run the wrapper script we added:
-```bash
-cd mobile
-npm run build-apk
-```
 
 ## Responsive Design
 
