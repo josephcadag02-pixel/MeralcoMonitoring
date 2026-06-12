@@ -5,6 +5,11 @@ import { dirname, join } from 'path';
 import fs from 'fs';
 import csv from 'csv-parser';
 import { createObjectCsvWriter } from 'csv-writer';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import Reading from './models/Reading.js';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,6 +18,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const DATA_DIR = join(__dirname, '../data');
 const CSV_FILE = join(DATA_DIR, 'readings.csv');
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // Middleware
 app.use(cors());
@@ -28,8 +34,24 @@ if (!fs.existsSync(CSV_FILE)) {
   fs.writeFileSync(CSV_FILE, 'timestamp,reading,previousReading\n');
 }
 
+const isMongoConnected = () => mongoose.connection.readyState === 1;
+
 // Get all readings
-app.get('/api/readings', (req, res) => {
+app.get('/api/readings', async (req, res) => {
+  if (isMongoConnected()) {
+    try {
+      const readings = await Reading.find({}).sort({ timestamp: 1 }).lean();
+      return res.json(readings.map(r => ({
+        timestamp: r.timestamp.toISOString(),
+        reading: r.reading,
+        previousReading: r.previousReading
+      })));
+    } catch (err) {
+      console.error('Error reading from MongoDB:', err);
+      return res.status(500).json({ error: 'Error reading data' });
+    }
+  }
+
   const readings = [];
   fs.createReadStream(CSV_FILE)
     .pipe(csv())
@@ -68,6 +90,31 @@ app.post('/api/readings', async (req, res) => {
   } else {
     timestamp = new Date().toISOString();
   }
+
+  const numericReading = parseFloat(reading);
+  const numericPrevious = previousReading === undefined || previousReading === null
+    ? numericReading
+    : parseFloat(previousReading);
+
+  if (isMongoConnected()) {
+    try {
+      const newReading = await Reading.create({
+        timestamp: new Date(timestamp),
+        reading: numericReading,
+        previousReading: numericPrevious
+      });
+      return res.json({
+        success: true,
+        timestamp: newReading.timestamp.toISOString(),
+        reading: newReading.reading,
+        previousReading: newReading.previousReading
+      });
+    } catch (err) {
+      console.error('Error writing to MongoDB:', err);
+      return res.status(500).json({ error: 'Error saving data' });
+    }
+  }
+
   const csvWriter = createObjectCsvWriter({
     path: CSV_FILE,
     header: [
@@ -77,12 +124,6 @@ app.post('/api/readings', async (req, res) => {
     ],
     append: true
   });
-
-  // Ensure numeric values for storage
-  const numericReading = parseFloat(reading);
-  const numericPrevious = previousReading === undefined || previousReading === null
-    ? numericReading
-    : parseFloat(previousReading);
 
   try {
     await csvWriter.writeRecords([{ timestamp, reading: numericReading, previousReading: numericPrevious }]);
@@ -94,7 +135,44 @@ app.post('/api/readings', async (req, res) => {
 });
 
 // Get statistics
-app.get('/api/stats', (req, res) => {
+app.get('/api/stats', async (req, res) => {
+  if (isMongoConnected()) {
+    try {
+      const allReadings = await Reading.find({}).sort({ timestamp: 1 }).lean();
+      const readings = allReadings.map(r => ({
+        timestamp: new Date(r.timestamp),
+        reading: r.reading,
+        previousReading: r.previousReading
+      }));
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const yearStart = new Date(now.getFullYear(), 0, 1);
+
+      const dailyReadings = readings.filter(r => r.timestamp >= today);
+      const monthlyReadings = readings.filter(r => r.timestamp >= monthStart);
+      const yearlyReadings = readings.filter(r => r.timestamp >= yearStart);
+
+      const calculateConsumption = (readingsList) => {
+        if (readingsList.length < 2) return 0;
+        const first = readingsList[0];
+        const last = readingsList[readingsList.length - 1];
+        return Math.max(0, last.reading - first.previousReading);
+      };
+
+      return res.json({
+        daily: calculateConsumption(dailyReadings),
+        monthly: calculateConsumption(monthlyReadings),
+        yearly: calculateConsumption(yearlyReadings),
+        lastReading: readings.length > 0 ? readings[readings.length - 1] : null
+      });
+    } catch (err) {
+      console.error('Error reading stats from MongoDB:', err);
+      return res.status(500).json({ error: 'Error reading data' });
+    }
+  }
+
   const readings = [];
   fs.createReadStream(CSV_FILE)
     .pipe(csv())
@@ -158,6 +236,25 @@ app.get('/api/export', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const connectDatabase = async () => {
+  if (!MONGODB_URI) {
+    console.warn('MONGODB_URI not set. Falling back to CSV storage.');
+    return;
+  }
+
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('Connected to MongoDB Atlas');
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+  }
+};
+
+connectDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
 });
