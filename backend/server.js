@@ -140,6 +140,24 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Root route - simple status message for visiting the service in a browser
+app.get('/', (req, res) => {
+  res.send('Backend running');
+});
+
+// Export CSV for download
+app.get('/api/export', (req, res) => {
+  if (!fs.existsSync(CSV_FILE)) {
+    return res.status(404).send('CSV file not found');
+  }
+  res.download(CSV_FILE, 'readings.csv', (err) => {
+    if (err) {
+      console.error('Error sending CSV:', err);
+      if (!res.headersSent) res.status(500).send('Error sending file');
+    }
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
